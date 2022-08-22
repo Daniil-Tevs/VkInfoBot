@@ -1,10 +1,14 @@
 import telebot
 import requests
-
 from bs4 import BeautifulSoup
 
 
-def findInfoUserVk(url):
+bot = telebot.TeleBot("5645360728:AAFQytUgyOXKj6WOisuI38OQZqtyGKPOGOk")
+
+@bot.message_handler(commands=['/find'])
+def findInfoUserVk(message):
+    url = message.text.split()[1]
+    print(url)
     information = ""
     if url.count("https://vk.com/") == 0:
         response = requests.get("https://vk.com/" + url)
@@ -17,26 +21,20 @@ def findInfoUserVk(url):
         information+=name.text
         block = td.find('div', class_="OwnerInfo")
         list = block.findAll('a')
-        list.pop()
-        for i in list:
-            information+="\n"+i.text
-        return information
+        if len(list)>0:
+            list.pop()
+            for i in list:
+                information+="\n"+i.text
+        bot.send_message(message.from_user.id, information)
 
 
-def main():
-    bot = telebot.TeleBot("5645360728:AAFQytUgyOXKj6WOisuI38OQZqtyGKPOGOk")
+@bot.message_handler(content_types=['text'])
+def get_text_messages(message):
+    if message.text == "/start":
+        bot.send_message(message.from_user.id, "Привет. Вот,что я умею:\n /find - поиск информации о людях в вк")
+    else:
+        bot.send_message(message.from_user.id, findInfoUserVk(message.text))
 
-    @bot.message_handler(content_types=['text'])
-    def get_text_messages(message):
-        if message.text == "/start":
-            bot.send_message(message.from_user.id, "Привет. Вот,что я умею:\n /find - поиск информации о людях в вк")
-        elif message.text == "/find":
-            bot.send_message(message.from_user.id, "Скинь адрес человека в вконтакте")
-        else:
-            bot.send_message(message.from_user.id, findInfoUserVk(message.text))
-
-    bot.polling(none_stop=True, interval=0)
+bot.polling(none_stop=True, interval=0)
 
 
-if __name__ == "__main__":
-    main()
